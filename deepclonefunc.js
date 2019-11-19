@@ -4,7 +4,7 @@
  on an element that is not an array, set, or map.
  ─────────────────────────────────────────────────────────────────────────────
  Author: seto89
- Date: 2019-11-10
+ Date: 2019-19-10
  Version: 1.0.0 (based on deepclone.js 1.0.2)
  Repo: https://github.com/seto89/js-functions
  License: MIT
