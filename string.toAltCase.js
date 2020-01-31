@@ -1,8 +1,3 @@
-// toAltCase by @RockStarwind
-// MIT License
-// How to use:
-//	"string".toAltCase(lowercase);
-//	* lowercase: false by default, set to true to start altcasing in lowercase
 /*
  ─────────────────────────────────────────────────────────────────────────────
  Author: @RockStarwind
