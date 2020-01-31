@@ -45,14 +45,22 @@ String.prototype.isUpperCase = function() {
  # toAltCase()
  How to use:
    "string".toAltCase(lowercase);
-   * lowercase: false by default, set to true to start altcasing in lowercase
+   * lowercase options:
+      * true: Start altcasing with lowercase letters
+      * false: Start altcasing with uppercase letters
+      * (blank): First alphabetical character decides altcasing
 */
 String.prototype.toAltCase = function(lowercase) {
 	'use strict';
-	lowercase = (lowercase === true);
+	if (typeof(lowercase) !== "undefined") {
+		lowercase = (["true", true].includes(lowercase));
+	}
 	var str = this.split("");
 	for (var i = 0; i < str.length; i++) {
-		if ((/([A-Za-z\u00C0-\u1FFF\u2800-\uFFFD])/i).test(str[i])) {
+		if ((/[a-z]/i).test(str[i])) {
+			if (typeof(lowercase) === "undefined") {
+				lowercase = (str[i]).isLowerCase();
+			}
 			str[i] = (lowercase) ? str[i].toLowerCase() : str[i].toUpperCase()
 			lowercase = !lowercase;
 		}
