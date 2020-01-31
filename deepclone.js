@@ -3,10 +3,10 @@
  A Javascript function that deep clones objects and arrays
  Possibly faster than JSON.parse(JSON.stringify(obj)).
  ─────────────────────────────────────────────────────────────────────────────
- Author: seto89
+ Author: @RockStarwind
  Date: 2019-11-10
  Version: 1.0.2
- Repo: https://github.com/seto89/js-functions
+ Repo: https://github.com/RockStarwind/js-functions
  License: MIT
  ─────────────────────────────────────────────────────────────────────────────
  Polyfill for Object.assign:
