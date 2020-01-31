@@ -3,10 +3,10 @@
  A Javascript function that deep clones objects and arrays and calls a function
  on an element that is not an array, set, or map.
  ─────────────────────────────────────────────────────────────────────────────
- Author: seto89
+ Author: @RockStarwind
  Date: 2019-19-10
  Version: 1.0.0 (based on deepclone.js 1.0.2)
- Repo: https://github.com/seto89/js-functions
+ Repo: https://github.com/RockStarwind/js-functions
  License: MIT
  ─────────────────────────────────────────────────────────────────────────────
  Polyfill for Object.assign:
