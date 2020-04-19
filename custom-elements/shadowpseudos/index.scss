@@ -13,6 +13,8 @@
 	* nth-after($num): Returns "::part(nth-after-$num)"
 	* nth-last-before($num): Returns "::part(nth-last-before-$num)"
 	* nth-last-after($num): Returns "::part(nth-last-after-$num)"
+	* named-before($name): Returns "::part(named-before-$name)"
+	* named-after($name): Returns "::part(named-after-$name)"
 */
 @function shadowpseudo-num($num) {
 	@if (type-of($num) == "number") {
@@ -34,3 +36,5 @@
 @function nth-after($num) { @return "::part(nth-after-#{shadowpseudo-num($num)})"; }
 @function nth-last-before($num) { @return "::part(nth-last-before-#{shadowpseudo-num($num)})"; }
 @function nth-last-after($num) { @return "::part(nth-last-after-#{shadowpseudo-num($num)})"; }
+@function named-before($name) { @return "::part(named-before-#{$name})"}
+@function named-after($name) { @return "::part(named-after-#{$name})"}
