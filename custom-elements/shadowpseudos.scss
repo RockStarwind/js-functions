@@ -1,0 +1,36 @@
+/*
+	The functions:
+	* shadowpseudo-num($num): A helper function that checks if $num is a number and above 0
+	* before(): Returns "::part(before)"
+	* after(): Returns "::part(after)"
+	* first-before(): Returns "::part(first-before)"
+	* first-after(): Returns "::part(first-after)"
+	* last-before(): Returns "::part(last-before)"
+	* last-after(): Returns "::part(last-after)"
+	* only-before(): Returns "::part(only-before)"
+	* only-after(): Returns "::part(only-after)"
+	* nth-before($num): Returns "::part(nth-before-$num)"
+	* nth-after($num): Returns "::part(nth-after-$num)"
+	* nth-last-before($num): Returns "::part(nth-last-before-$num)"
+	* nth-last-after($num): Returns "::part(nth-last-after-$num)"
+*/
+@function shadowpseudo-num($num) {
+	@if (type-of($num) == "number") {
+		@if ($num < 1) { $num: 1; }
+	} @else {
+		$num: 1;
+	}
+	@return $num;
+}
+@function before() { @return "::part(before)"; }
+@function after() { @return "::part(after)"; }
+@function first-before() { @return "::part(first-before)"; }
+@function first-after() { @return "::part(first-after)"; }
+@function last-before() { @return "::part(last-before)"; }
+@function last-after() { @return "::part(last-after)"; }
+@function only-before() { @return "::part(only-before)"; }
+@function only-after() { @return "::part(only-after)"; }
+@function nth-before($num) { @return "::part(nth-before-#{shadowpseudo-num($num)})"; }
+@function nth-after($num) { @return "::part(nth-after-#{shadowpseudo-num($num)})"; }
+@function nth-last-before($num) { @return "::part(nth-last-before-#{shadowpseudo-num($num)})"; }
+@function nth-last-after($num) { @return "::part(nth-last-after-#{shadowpseudo-num($num)})"; }
