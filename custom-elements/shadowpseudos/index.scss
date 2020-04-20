@@ -15,6 +15,13 @@
 	* nth-last-after($num): Returns "::part(nth-last-after-$num)"
 	* named-before($name): Returns "::part(named-before-$name)"
 	* named-after($name): Returns "::part(named-after-$name)"
+	* pseudo(): Returns "::part(pseudo)"
+	* first-pseudo(): Returns "::part(first-pseudo)"
+	* last-pseudo(): Returns "::part(last-pseudo)"
+	* only-pseudo(): Returns "::part(only-pseudo)"
+	* nth-pseudo($num): Returns "::part(nth-pseudo-$num)"
+	* nth-last-pseudo($num): Returns "::part(nth-last-pseudo-$num)"
+	* named-pseudo($name): Returns "::part(named-pseudo-$name)"
 */
 @function shadowpseudo-num($num) {
 	@if (type-of($num) == "number") {
@@ -36,5 +43,12 @@
 @function nth-after($num) { @return "::part(nth-after-#{shadowpseudo-num($num)})"; }
 @function nth-last-before($num) { @return "::part(nth-last-before-#{shadowpseudo-num($num)})"; }
 @function nth-last-after($num) { @return "::part(nth-last-after-#{shadowpseudo-num($num)})"; }
-@function named-before($name) { @return "::part(named-before-#{$name})"}
-@function named-after($name) { @return "::part(named-after-#{$name})"}
+@function named-before($name) { @return "::part(named-before-#{$name})" }
+@function named-after($name) { @return "::part(named-after-#{$name})" }
+@function pseudo() { @return "::part(pseudo)"; }
+@function first-pseudo() { @return "::part(first-pseudo)"; }
+@function last-pseudo() { @return "::part(last-pseudo)"; }
+@function only-pseudo() { @return "::part(only-pseudo)"; }
+@function nth-pseudo($num) { @return "::part(nth-pseudo-#{shadowpseudo-num($num)})"; }
+@function nth-last-pseudo($num) { @return "::part(nth-last-pseudo-#{shadowpseudo-num($num)})"; }
+@function named-pseudo($name) { @return "::part(named-pseudo-#{$name})" }
