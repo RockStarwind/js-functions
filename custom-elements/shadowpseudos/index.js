@@ -4,6 +4,8 @@
  Creation Date: 2020-04-16
  v1.01 Date: 2020-04-19
  v1.04 Date: 2020-04-20
+ v1.05 Date: 2020-04-20
+ Stylesheets code borrowed from @tomhodgins' CSSOMTools
  Repo: https://github.com/RockStarwind/js-functions
  License: MIT
  ─────────────────────────────────────────────────────────────────────────────
@@ -23,7 +25,7 @@ const pseudosFuncs = {
 		{name: "", extends: "dt"},
 	],
 	
-	// Get and Set pseudo attribute
+	// ● Get and Set pseudo attribute
 	getPseudos: function (el) {
 		var pseudos = Number(el.getAttribute("pseudos")) || 1;
 		pseudos = (pseudos > 0) ? pseudos : 1;
@@ -36,7 +38,7 @@ const pseudosFuncs = {
 		el.rerender(el.innerHTML, val);
 	},
 	
-	// Get and Set pseudo names
+	// ● Get and Set pseudo names
 	getPseudosNames: function (el) {
 		var pseudosNames = el.getAttribute("pseudos-names") || false;
 		return pseudosNames;
@@ -50,39 +52,36 @@ const pseudosFuncs = {
 		el.rerender(el.innerHTML, el.pseudos)
 	},
 	
-	// Initialize extending elements with pseudo functionality 
+	// ● Initialize extending elements with pseudo functionality 
 	init: function (el) {
-		// Function: Quickly retrieve property value of element
+		// ■ Function: Quickly retrieve property value of element
 		function gpv(property, elem) {
 			elem = elem || el;
 			return window.getComputedStyle(elem).getPropertyValue(property);
 		}
 		
-		// Function: Pre-rerender
+		// ■ Function: Pre-rerender
 		function prererender() {
 			pseudos = el.pseudos;
 			pseudosNames = el.pseudosNames;
 			content = el.innerHTML;
-			cssProp = gpv("--css");
 		}
 		
-		// Create Shadow Root, declare variables
+		// ■ Create Shadow Root, declare variables
 		var shadow = el.attachShadow({mode: 'open'});
 		var content = el.innerHTML;
 		var pseudos = el.pseudos;
 		var pseudosNames = el.pseudosNames;
-		var cssProp = gpv("--css");
 		var contentProp = {};
 		var self = el;
 		el.render(content, pseudos);
 		
-		// Update shadow if...
+		// ■ Update shadow if...
 		setInterval(function () {
 			// If pseudo names, count, or --keyframes property aren't the same, rerender.
 			if (
 				pseudos !== el.pseudos ||
-				pseudosNames !== el.pseudosNames ||
-				cssProp !== gpv("--css")
+				pseudosNames !== el.pseudosNames
 			) {
 				contentProp = {};
 				prererender();
@@ -91,6 +90,7 @@ const pseudosFuncs = {
 			
 			// Loop through pseudos
 			for (var i = 0; i < pseudos; i++) {
+				// Select shadowpseudo element and get property value of content;
 				var spanBeforePart = `[part*="nth-before-${(i + 1)}"]`;
 				var spanBefore = shadow.querySelector(spanBeforePart);
 				var spanBeforeContent = gpv("content", spanBefore);
@@ -120,7 +120,7 @@ const pseudosFuncs = {
 		}, 500);
 	},
 	
-	// Re-render the contents
+	// ● Re-render the contents
 	rerender: function (content, pseudos, el) {
 		content = content || el.innerHTML;
 		pseudos = Number(pseudos) || el.pseudos || 1;
@@ -129,22 +129,20 @@ const pseudosFuncs = {
 		el.render(content, pseudos);
 	},
 	
-	// Render the contents
+	// ● Render the contents
 	render: function (content, pseudos, el) {
-		// Quickly retrieve property value of element
+		// ■ Function: Quickly retrieve property value of element
 		function gpv(property, elem) {
 			elem = elem || el;
 			return window.getComputedStyle(elem).getPropertyValue(property);
 		}
 		
-		// Declare variables
+		// ■ Declare variables
 		content = content || el.innerHTML;
 		pseudos = Number(pseudos) || el.pseudos || 1;
 		var pseudosNames = el.pseudosNames || "";
-		var cssProp = gpv("--css");
-		cssProp = cssProp.replace(/\\9(\s)*/g, "");
 		
-		// Modify content of pseudosNames
+		// ■ Modify content of pseudosNames
 		if (pseudosNames) {
 			// Split pseudosNames by whitespace
 			pseudosNames = pseudosNames.split(" "); 
@@ -159,25 +157,48 @@ const pseudosFuncs = {
 			}
 		}
 		
-		// Create shadow and style
+		// ■ Create shadow and style
 		var shadow = el.shadowRoot;
 		var style = document.createElement("style");
 		style.innerHTML = `
-			/* --css property content */
-			${eval(cssProp)}
-
 			/* .shadowpseudo content */
 			:host .shadowpseudo > span:before { content: normal; }
 			:host .shadowpseudo > span:after { content: none; }
 		`;
 		
-		// Create innerHTML slot and before/after templates
+		// ■ Retrieve available stylesheets
+		// * Uses code from @tomhodgins' CSSOMTools
+		var stylesheets = (function () {
+			return Array.prototype.slice.call(document.styleSheets).map(function(stylesheet) {
+				try { stylesheet.cssRules; }
+				catch(error) { return null; }
+				return stylesheet;
+			}).filter(
+				function (object) {
+					return object && object.cssRules && object.cssRules.length;
+				}
+			)
+		})();
+		
+		// ■ Loop through available stylesheets
+		for (var i = 0; i < stylesheets.length; i++) {
+			var rules = stylesheets[i].rules;
+			// Loop through stylesheet rules
+			for (var j = 0; j < rules.length; j++) {
+				// Is this a keyframes rule?
+				if (rules[j].type === 7) {
+					style.innerHTML += rules[j].cssText;
+				}
+			}
+		}
+		
+		// ■ Create innerHTML slot and before/after templates
 		var slot = document.createElement("slot");
 		slot.innerHTML = el.innerHTML;
 		var templateBefore = document.createElement("template");
 		var templateAfter = document.createElement("template");
 		
-		// Create and append befores and afters to templates
+		// ■ Create and append befores and afters to templates
 		for (var i = 0; i < pseudos; i++) {
 			// Create an array of part names for each generated shadow pseudo
 			var beforeNames = ["before", `nth-before-${(i + 1)}`, `nth-last-before-${(pseudos - i)}`, "pseudo", `nth-pseudo-${(i + 1)}`, `nth-last-pseudo-${(pseudos - i)}`];
@@ -216,13 +237,13 @@ const pseudosFuncs = {
 			templateAfter.content.appendChild(spanAfter);
 		}
 		
-		// Attach elements to shadow
+		// ■ Attach elements to shadow
 		shadow.appendChild(style);
 		shadow.appendChild(templateBefore.content);
 		shadow.appendChild(slot);
 		shadow.appendChild(templateAfter.content);
 		
-		// Loop through number of pseudos and add content
+		// ■ Loop through number of pseudos and add content
 		for (var i = 0; i < pseudos; i++) {
 			var spanBeforePart = `[part*="nth-before-${(i + 1)}"]`;
 			var spanBefore = shadow.querySelector(spanBeforePart);
