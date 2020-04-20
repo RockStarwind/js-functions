@@ -2,7 +2,8 @@
  ─────────────────────────────────────────────────────────────────────────────
  Author: @RockStarwind
  Creation Date: 2020-04-16
- Updated Date: 2020-04-19
+ v1.01 Date: 2020-04-19
+ v1.04 Date: 2020-04-20
  Repo: https://github.com/RockStarwind/js-functions
  License: MIT
  ─────────────────────────────────────────────────────────────────────────────
@@ -51,22 +52,70 @@ const pseudosFuncs = {
 	
 	// Initialize extending elements with pseudo functionality 
 	init: function (el) {
+		// Function: Quickly retrieve property value of element
+		function gpv(property, elem) {
+			elem = elem || el;
+			return window.getComputedStyle(elem).getPropertyValue(property);
+		}
+		
+		// Function: Pre-rerender
+		function prererender() {
+			pseudos = el.pseudos;
+			pseudosNames = el.pseudosNames;
+			content = el.innerHTML;
+			cssProp = gpv("--css");
+		}
+		
+		// Create Shadow Root, declare variables
 		var shadow = el.attachShadow({mode: 'open'});
 		var content = el.innerHTML;
 		var pseudos = el.pseudos;
 		var pseudosNames = el.pseudosNames;
+		var cssProp = gpv("--css");
+		var contentProp = {};
 		var self = el;
 		el.render(content, pseudos);
 		
+		// Update shadow if...
 		setInterval(function () {
+			// If pseudo names, count, or --keyframes property aren't the same, rerender.
 			if (
 				pseudos !== el.pseudos ||
-				pseudosNames !== el.pseudosNames
+				pseudosNames !== el.pseudosNames ||
+				cssProp !== gpv("--css")
 			) {
-				pseudos = el.pseudos;
-				pseudosNames = el.pseudosNames;
-				content = el.innerHTML;
-				el.rerender(content, pseudos)
+				contentProp = {};
+				prererender();
+				el.rerender(content, pseudos);
+			}
+			
+			// Loop through pseudos
+			for (var i = 0; i < pseudos; i++) {
+				var spanBeforePart = `[part*="nth-before-${(i + 1)}"]`;
+				var spanBefore = shadow.querySelector(spanBeforePart);
+				var spanBeforeContent = gpv("content", spanBefore);
+				var spanAfterPart = `[part*="nth-after-${(i + 1)}"]`;
+				var spanAfter = shadow.querySelector(spanAfterPart);
+				var spanAfterContent = gpv("content", spanAfter);
+				
+				// Assign content values to contentProp object
+				if (Object.keys(contentProp).length < (pseudos * 2)) {
+					contentProp[spanBeforePart] = spanBeforeContent;
+					contentProp[spanAfterPart] = spanAfterContent;
+				}
+				// Check if contentProp object values matches content property values
+				else {
+					if (
+						contentProp[spanBeforePart] !== spanBeforeContent ||
+						contentProp[spanAfterPart] !== spanAfterContent
+					) {
+						contentProp[spanBeforePart] = spanBeforeContent;
+						contentProp[spanAfterPart] = spanAfterContent;
+						prererender();
+						el.rerender(content, pseudos);
+						break;
+					}
+				}
 			}
 		}, 500);
 	},
@@ -82,9 +131,18 @@ const pseudosFuncs = {
 	
 	// Render the contents
 	render: function (content, pseudos, el) {
+		// Quickly retrieve property value of element
+		function gpv(property, elem) {
+			elem = elem || el;
+			return window.getComputedStyle(elem).getPropertyValue(property);
+		}
+		
+		// Declare variables
 		content = content || el.innerHTML;
 		pseudos = Number(pseudos) || el.pseudos || 1;
 		var pseudosNames = el.pseudosNames || "";
+		var cssProp = gpv("--css");
+		cssProp = cssProp.replace(/\\9(\s)*/g, "");
 		
 		// Modify content of pseudosNames
 		if (pseudosNames) {
@@ -95,6 +153,7 @@ const pseudosFuncs = {
 				if ((/^(([a-zA-Z]){1}([a-zA-Z0-9-_]*))$/i).test(pseudosNames[i])) {
 					i++; // Proceed
 				} else {
+					console.warn(`${pseudosNames[i]} is not a valid name. Names must begin with a letter and only contain letters, numbers, hyphens, and underscores.`);
 					pseudosNames.splice(i, 1); // Remove from array
 				}
 			}
@@ -104,7 +163,11 @@ const pseudosFuncs = {
 		var shadow = el.shadowRoot;
 		var style = document.createElement("style");
 		style.innerHTML = `
-			:host .shadowpseudo > span:before { content: var(--content); }
+			/* --css property content */
+			${eval(cssProp)}
+
+			/* .shadowpseudo content */
+			:host .shadowpseudo > span:before { content: normal; }
 			:host .shadowpseudo > span:after { content: none; }
 		`;
 		
@@ -116,27 +179,26 @@ const pseudosFuncs = {
 		
 		// Create and append befores and afters to templates
 		for (var i = 0; i < pseudos; i++) {
-			// Create part names for each generated shadow pseudo
-			var beforeNames = ["before", `nth-before-${(i + 1)}`, `nth-last-before-${(pseudos - i)}`];
-			var afterNames = ["after", `nth-after-${(i + 1)}`, `nth-last-after-${(pseudos - i)}`];
+			// Create an array of part names for each generated shadow pseudo
+			var beforeNames = ["before", `nth-before-${(i + 1)}`, `nth-last-before-${(pseudos - i)}`, "pseudo", `nth-pseudo-${(i + 1)}`, `nth-last-pseudo-${(pseudos - i)}`];
+			var afterNames = ["after", `nth-after-${(i + 1)}`, `nth-last-after-${(pseudos - i)}`, "pseudo", `nth-pseudo-${(i + 1)}`, `nth-last-pseudo-${(pseudos - i)}`];
 			
 			// Attach more names
-			if ((i === pseudos - 1) && (i === 0)) {
-				beforeNames.push("only-before");
-				afterNames.push("only-after");
+			if ((i === pseudos - 1) && (i === 0)) { // Only
+				beforeNames.push(...["only-before", "only-pseudo"]);
+				afterNames.push(...["only-after", "only-pseudo"]);
 			}
-			if (i === 0) {
-				beforeNames.push("first-before");
-				afterNames.push("first-after");
+			if (i === 0) { // First
+				beforeNames.push(...["first-before", "first-pseudo"]);
+				afterNames.push(...["first-after", "first-pseudo"]);
 			}
-			if (i === pseudos - 1) {
-				beforeNames.push("last-before");
-				afterNames.push("last-after");
+			if (i === pseudos - 1) { // Last
+				beforeNames.push(...["last-before", "last-pseudo"]);
+				afterNames.push(...["last-after", "last-pseudo"]);
 			}
-			// And an alias
-			if (pseudosNames && pseudosNames[i]) {
-				beforeNames.push(`named-before-${pseudosNames[i]}`);
-				afterNames.push(`named-after-${pseudosNames[i]}`);
+			if (pseudosNames && pseudosNames[i]) { // Named pseudo
+				beforeNames.push(...[`named-before-${pseudosNames[i]}`, `named-pseudo-${pseudosNames[i]}`]);
+				afterNames.push(...[`named-after-${pseudosNames[i]}`, `named-pseudo-${pseudosNames[i]}`]);
 			}
 			
 			// Create before/after shadow pseudos
@@ -159,6 +221,20 @@ const pseudosFuncs = {
 		shadow.appendChild(templateBefore.content);
 		shadow.appendChild(slot);
 		shadow.appendChild(templateAfter.content);
+		
+		// Loop through number of pseudos and add content
+		for (var i = 0; i < pseudos; i++) {
+			var spanBeforePart = `[part*="nth-before-${(i + 1)}"]`;
+			var spanBefore = shadow.querySelector(spanBeforePart);
+			var spanBeforeContent = gpv("content", spanBefore);
+			var spanAfterPart = `[part*="nth-after-${(i + 1)}"]`;
+			var spanAfter = shadow.querySelector(spanAfterPart);
+			var spanAfterContent = gpv("content", spanAfter);
+			style.innerHTML += `
+				:host ${spanBeforePart} > span:before { content: ${spanBeforeContent}; }
+				:host ${spanAfterPart} > span:before { content: ${spanAfterContent}; }
+			`;
+		}
 	}
 }
 
