@@ -5,6 +5,7 @@
  v1.01 Date: 2020-04-19
  v1.04 Date: 2020-04-20
  v1.05 Date: 2020-04-20
+ v1.06 Date: 2020-04-23
  Stylesheets code borrowed from @tomhodgins' CSSOMTools
  Repo: https://github.com/RockStarwind/js-functions
  License: MIT
@@ -44,11 +45,8 @@ const pseudosFuncs = {
 		return pseudosNames;
 	},
 	setPseudosNames: function (val, el) {
-		if (val) {
-			el.setAttribute("pseudos-names", val);
-		} else {
-			el.removeAttribute("pseudos-names");
-		}
+		if (val) { el.setAttribute("pseudos-names", val); }
+		else { el.removeAttribute("pseudos-names"); }
 		el.rerender(el.innerHTML, el.pseudos)
 	},
 	
@@ -78,42 +76,37 @@ const pseudosFuncs = {
 		
 		// ■ Update shadow if...
 		setInterval(function () {
-			// If pseudo names, count, or --keyframes property aren't the same, rerender.
-			if (
-				pseudos !== el.pseudos ||
-				pseudosNames !== el.pseudosNames
-			) {
+			// If pseudo names or number of pseudos aren't the same
+			if (pseudos !== el.pseudos || pseudosNames !== el.pseudosNames) {
 				contentProp = {};
 				prererender();
 				el.rerender(content, pseudos);
 			}
 			
+			// If pseudo content property values do not match
 			// Loop through pseudos
 			for (var i = 0; i < pseudos; i++) {
-				// Select shadowpseudo element and get property value of content;
-				var spanBeforePart = `[part*="nth-before-${(i + 1)}"]`;
-				var spanBefore = shadow.querySelector(spanBeforePart);
-				var spanBeforeContent = gpv("content", spanBefore);
-				var spanAfterPart = `[part*="nth-after-${(i + 1)}"]`;
-				var spanAfter = shadow.querySelector(spanAfterPart);
-				var spanAfterContent = gpv("content", spanAfter);
-				
-				// Assign content values to contentProp object
-				if (Object.keys(contentProp).length < (pseudos * 2)) {
-					contentProp[spanBeforePart] = spanBeforeContent;
-					contentProp[spanAfterPart] = spanAfterContent;
-				}
-				// Check if contentProp object values matches content property values
-				else {
-					if (
-						contentProp[spanBeforePart] !== spanBeforeContent ||
-						contentProp[spanAfterPart] !== spanAfterContent
-					) {
-						contentProp[spanBeforePart] = spanBeforeContent;
-						contentProp[spanAfterPart] = spanAfterContent;
-						prererender();
-						el.rerender(content, pseudos);
-						break;
+				// For loop is there to prevent writing repetitive code.
+				// 0 represents "before"; 1 represents "after"
+				for (var j = 0; j <= 1; j++) {
+					// Select shadowpseudo element and get property value of content;
+					var position = (j === 0) ? "before" : "after";
+					var selector = `[part*="nth-${position}-${(i + 1)}"]`;
+					var spanEl = shadow.querySelector(selector);
+					var spanContent = gpv("content", spanEl);
+					
+					// Assign content values to contentProp object
+					if (Object.keys(contentProp).length < (pseudos * 2)) {
+						contentProp[selector] = spanContent;
+					}
+					else {
+						// Check if contentProp key matches content property value
+						if (contentProp[selector] !== spanContent) {
+							contentProp[selector] = spanContent;
+							prererender();
+							el.rerender(content, pseudos);
+							break;
+						}
 					}
 				}
 			}
@@ -141,6 +134,7 @@ const pseudosFuncs = {
 		content = content || el.innerHTML;
 		pseudos = Number(pseudos) || el.pseudos || 1;
 		var pseudosNames = el.pseudosNames || "";
+		var styleProps = {};
 		
 		// ■ Modify content of pseudosNames
 		if (pseudosNames) {
@@ -157,14 +151,12 @@ const pseudosFuncs = {
 			}
 		}
 		
-		// ■ Create shadow and style
+		// ■ Create shadow and other elements
 		var shadow = el.shadowRoot;
+		var slot = document.createElement("slot");
+		var templateBefore = document.createElement("template");
+		var templateAfter = document.createElement("template");
 		var style = document.createElement("style");
-		style.innerHTML = `
-			/* .shadowpseudo content */
-			:host .shadowpseudo > span:before { content: normal; }
-			:host .shadowpseudo > span:after { content: none; }
-		`;
 		
 		// ■ Retrieve available stylesheets
 		// * Uses code from @tomhodgins' CSSOMTools
@@ -187,54 +179,76 @@ const pseudosFuncs = {
 			for (var j = 0; j < rules.length; j++) {
 				// Is this a keyframes rule?
 				if (rules[j].type === 7) {
-					style.innerHTML += rules[j].cssText;
+					// Append the rule to the Shadow DOM stylesheet
+					style.innerHTML += rules[j].cssText + "\n";
 				}
 			}
 		}
 		
-		// ■ Create innerHTML slot and before/after templates
-		var slot = document.createElement("slot");
+		// ■ Slot and Style
 		slot.innerHTML = el.innerHTML;
-		var templateBefore = document.createElement("template");
-		var templateAfter = document.createElement("template");
+		style.innerHTML = [
+			"/* .shadowpseudo content */",
+			":host .shadowpseudo > span:before { content: normal; }",
+			":host .shadowpseudo > span:after { content: none; }",
+			":host .shadowpseudo:before { --shadowpseudo-pseudo: \"before\"; }",
+			":host .shadowpseudo:after { --shadowpseudo-pseudo: \"after\"; }\n\n",
+		].join("\n");
 		
 		// ■ Create and append befores and afters to templates
 		for (var i = 0; i < pseudos; i++) {
-			// Create an array of part names for each generated shadow pseudo
-			var beforeNames = ["before", `nth-before-${(i + 1)}`, `nth-last-before-${(pseudos - i)}`, "pseudo", `nth-pseudo-${(i + 1)}`, `nth-last-pseudo-${(pseudos - i)}`];
-			var afterNames = ["after", `nth-after-${(i + 1)}`, `nth-last-after-${(pseudos - i)}`, "pseudo", `nth-pseudo-${(i + 1)}`, `nth-last-pseudo-${(pseudos - i)}`];
+			// Set Style Props
+			styleProps.index = i + 1;
+			styleProps.lastIndex = (pseudos - i);
+			styleProps.name = "";
+			styleProps.position = "";
 			
-			// Attach more names
-			if ((i === pseudos - 1) && (i === 0)) { // Only
-				beforeNames.push(...["only-before", "only-pseudo"]);
-				afterNames.push(...["only-after", "only-pseudo"]);
+			// For loop is there to prevent writing repetitive code.
+			// 0 represents "before"; 1 represents "after"
+			for (var j = 0; j <= 1; j++) {
+				var position = (j === 0) ? "Before" : "After";
+				var parts = ["pseudo", `nth-pseudo-${(i + 1)}`, `nth-last-pseudo-${(pseudos - i)}`];
+				styleProps.position = position.toLowerCase();
+				
+				// Push before/after parts
+				if (j === 0) { // Push "before" parts
+					parts.push(...["before", `nth-before-${(i + 1)}`, `nth-last-before-${(pseudos - i)}`]);
+				}
+				else { // Push "after" parts
+					parts.push(...["after", `nth-after-${(i + 1)}`, `nth-last-after-${(pseudos - i)}`]);
+				}
+				// Push more parts depending on index (only, first, last)
+				if ((i === pseudos - 1) && (i === 0)) { // Only Pseudo
+					parts.push(...["only-pseudo", `only-${position.toLowerCase()}`]);
+				}
+				if (i === 0) { // First Pseudo
+					parts.push(...["first-pseudo", `first-${position.toLowerCase()}`]);
+				}
+				if (i === pseudos - 1) { // Last Pseudo
+					parts.push(...["last-pseudo", `last-${position.toLowerCase()}`]);
+				}
+				// Push named pseudo parts / Assign value to styleProps.name
+				if (pseudosNames && pseudosNames[i]) { // Named Pseudo
+					parts.push(...[`named-pseudo-${pseudosNames[i]}`, `named-${position.toLowerCase()}-${pseudosNames[i]}`]);
+					styleProps.name = pseudosNames[i];
+				}
+				
+				// Create span elements
+				var spanEl = document.createElement("span");
+				spanEl.appendChild(document.createElement("span"));
+				
+				// Assign attributes
+				spanEl.setAttribute("class", "shadowpseudo");
+				spanEl.setAttribute("part", parts.join(" "));
+				spanEl.style.setProperty("--shadowpseudo-index", styleProps.index);
+				spanEl.style.setProperty("--shadowpseudo-last-index", styleProps.lastIndex);
+				spanEl.style.setProperty("--shadowpseudo-name", `"${styleProps.name}"`);
+				spanEl.style.setProperty("--shadowpseudo-position", `"${styleProps.position}"`);
+				
+				// Attach span to a template
+				var templateEl = (j === 0) ? templateBefore : templateAfter;
+				templateEl.content.appendChild(spanEl);
 			}
-			if (i === 0) { // First
-				beforeNames.push(...["first-before", "first-pseudo"]);
-				afterNames.push(...["first-after", "first-pseudo"]);
-			}
-			if (i === pseudos - 1) { // Last
-				beforeNames.push(...["last-before", "last-pseudo"]);
-				afterNames.push(...["last-after", "last-pseudo"]);
-			}
-			if (pseudosNames && pseudosNames[i]) { // Named pseudo
-				beforeNames.push(...[`named-before-${pseudosNames[i]}`, `named-pseudo-${pseudosNames[i]}`]);
-				afterNames.push(...[`named-after-${pseudosNames[i]}`, `named-pseudo-${pseudosNames[i]}`]);
-			}
-			
-			// Create before/after shadow pseudos
-			// before
-			var spanBefore = document.createElement("span");
-			spanBefore.setAttribute("part", beforeNames.join(" "));
-			spanBefore.setAttribute("class", "shadowpseudo");
-			spanBefore.appendChild(document.createElement("span"));
-			templateBefore.content.appendChild(spanBefore);
-			// after
-			var spanAfter = document.createElement("span");
-			spanAfter.setAttribute("part", afterNames.join(" "));
-			spanAfter.setAttribute("class", "shadowpseudo");
-			spanAfter.appendChild(document.createElement("span"));
-			templateAfter.content.appendChild(spanAfter);
 		}
 		
 		// ■ Attach elements to shadow
@@ -245,16 +259,17 @@ const pseudosFuncs = {
 		
 		// ■ Loop through number of pseudos and add content
 		for (var i = 0; i < pseudos; i++) {
-			var spanBeforePart = `[part*="nth-before-${(i + 1)}"]`;
-			var spanBefore = shadow.querySelector(spanBeforePart);
-			var spanBeforeContent = gpv("content", spanBefore);
-			var spanAfterPart = `[part*="nth-after-${(i + 1)}"]`;
-			var spanAfter = shadow.querySelector(spanAfterPart);
-			var spanAfterContent = gpv("content", spanAfter);
-			style.innerHTML += `
-				:host ${spanBeforePart} > span:before { content: ${spanBeforeContent}; }
-				:host ${spanAfterPart} > span:before { content: ${spanAfterContent}; }
-			`;
+			// For loop is there to prevent writing repetitive code.
+			// 0 represents "before"; 1 represents "after"
+			for (var j = 0; j <= 1; j++) {
+				var position = (j === 0) ? "before" : "after";
+				var selector = `[part*="nth-${position}-${(i + 1)}"]`;
+				var spanEl = shadow.querySelector(selector);
+				var spanContent = gpv("content", spanEl);
+				if (spanContent !== "normal") {
+					style.innerHTML += `:host ${selector} > span:before { content: ${spanContent}; }\n`;
+				}
+			}
 		}
 	}
 }
