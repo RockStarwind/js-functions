@@ -6,6 +6,7 @@
  v1.04 Date: 2020-04-20
  v1.05 Date: 2020-04-20
  v1.06 Date: 2020-04-23
+ v1.07 Date: 2020-04-25
  Stylesheets code borrowed from @tomhodgins' CSSOMTools
  Repo: https://github.com/RockStarwind/js-functions
  License: MIT
@@ -198,8 +199,10 @@ const pseudosFuncs = {
 		// ■ Create and append befores and afters to templates
 		for (var i = 0; i < pseudos; i++) {
 			// Set Style Props
-			styleProps.index = i + 1;
-			styleProps.lastIndex = (pseudos - i);
+			styleProps.nthIndex0 = i;
+			styleProps.nthIndex = i + 1;
+			styleProps.nthLastIndex = (pseudos - i);
+			styleProps.nthLastIndex0 = styleProps.nthLastIndex - 1;
 			styleProps.name = "";
 			styleProps.position = "";
 			
@@ -240,9 +243,15 @@ const pseudosFuncs = {
 				// Assign attributes
 				spanEl.setAttribute("class", "shadowpseudo");
 				spanEl.setAttribute("part", parts.join(" "));
-				spanEl.style.setProperty("--shadowpseudo-index", styleProps.index);
-				spanEl.style.setProperty("--shadowpseudo-last-index", styleProps.lastIndex);
+				spanEl.style.setProperty("--shadowpseudo-first-index", 1);
+				spanEl.style.setProperty("--shadowpseudo-first-index-0", 0);
+				spanEl.style.setProperty("--shadowpseudo-last-index", pseudos);
+				spanEl.style.setProperty("--shadowpseudo-last-index-0", pseudos - 1);
 				spanEl.style.setProperty("--shadowpseudo-name", `"${styleProps.name}"`);
+				spanEl.style.setProperty("--shadowpseudo-nth-index", styleProps.nthIndex);
+				spanEl.style.setProperty("--shadowpseudo-nth-index-0", styleProps.nthIndex0);
+				spanEl.style.setProperty("--shadowpseudo-nth-last-index", styleProps.nthLastIndex);
+				spanEl.style.setProperty("--shadowpseudo-nth-last-index-0", styleProps.nthLastIndex0);
 				spanEl.style.setProperty("--shadowpseudo-position", `"${styleProps.position}"`);
 				
 				// Attach span to a template
